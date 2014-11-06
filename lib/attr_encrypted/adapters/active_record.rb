@@ -39,9 +39,14 @@ if defined?(ActiveRecord::Base)
           # Ensures the attribute methods for db fields have been defined before calling the original 
           # <tt>attr_encrypted</tt> method
           def attr_encrypted(*attrs)
-            define_attribute_methods rescue nil
+            unless attribute_methods_generated?
+              if respond_to?(:define_attribute_methods_without_custom_field_override)
+                  define_attribute_methods_without_custom_field_override rescue nil
+              else
+                define_attribute_methods rescue nil
+              end
+            end
             super
-            undefine_attribute_methods
             attrs.reject { |attr| attr.is_a?(Hash) }.each { |attr| alias_method "#{attr}_before_type_cast", attr }
           end
 
