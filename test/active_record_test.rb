@@ -23,10 +23,12 @@ def create_tables
       create_table :users do |t|
         t.string :login
         t.string :encrypted_password
+        t.string :encrypted_password_iv
         t.boolean :is_admin
       end
       create_table :prime_ministers do |t|
         t.string :encrypted_name
+        t.string :encrypted_name_iv
       end
       create_table :addresses do |t|
         t.binary :encrypted_street
@@ -54,9 +56,10 @@ if ::ActiveRecord::VERSION::STRING > "4.0"
 end
 
 class Person < ActiveRecord::Base
+  KEY_IV = SecureRandom.random_bytes(12)
   self.attr_encrypted_options[:mode] = :per_attribute_iv_and_salt
   attr_encrypted :email, :key => SECRET_KEY
-  attr_encrypted :credentials, :key => Proc.new { |user| Encryptor.encrypt(:value => user.salt, :key => SECRET_KEY, iv: SecureRandom.random_bytes(12)) }, :marshal => true
+  attr_encrypted :credentials, :key => Proc.new { |user| Encryptor.encrypt(:value => user.salt, :key => SECRET_KEY, iv: KEY_IV) }, :marshal => true
 
   after_initialize :initialize_salt_and_credentials
 
